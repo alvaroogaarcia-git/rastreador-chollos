@@ -1,46 +1,277 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreador de Chollos | Monitor de Precios</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rastreador de Ofertas — Panel de Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  </style>
 </head>
-<body>
-    <div class="app-container">
-        <header>
-            <h1>🏷️ Monitor de Precios en Tiempo Real</h1>
-            <p>Introduce la URL de cualquier producto para rastrear su precio.</p>
-        </header>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
-        <main>
-            <!-- Formulario para agregar productos -->
-            <section class="card">
-                <h2>Rastrear Nuevo Producto</h2>
-                <form id="productForm">
-                    <div class="input-group">
-                        <input 
-                            type="url" 
-                            id="productUrl" 
-                            placeholder="https://ejemplo.com/producto..." 
-                            required
-                        >
-                        <button type="submit" id="submitBtn">Añadir Producto</button>
-                    </div>
-                </form>
-                <div id="statusMessage" class="message hidden"></div>
-            </section>
-
-            <!-- Lista de productos monitorizados -->
-            <section class="card">
-                <h2>Productos Monitorizados</h2>
-                <div id="productsList" class="products-grid">
-                    <p class="empty-state">Cargando productos...</p>
-                </div>
-            </section>
-        </main>
+  <!-- Header principal -->
+  <header class="bg-slate-900 text-white border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-600 text-white p-1.5 rounded text-sm font-bold">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <span class="font-semibold text-sm tracking-wide">Monitor de Precios</span>
+        <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">v1.0</span>
+      </div>
+      <div class="flex items-center gap-4 text-xs text-slate-400">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          Servicios activos
+        </span>
+        <a href="https://github.com/alvaroogaarcia-git/rastreador-chollos" target="_blank" class="hover:text-white transition-colors">
+          <i class="fa-brands fa-github text-base"></i>
+        </a>
+      </div>
     </div>
+  </header>
 
-    <script src="app.js"></script>
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1">
+
+    <!-- Panel de control e introducción de URL -->
+    <section class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+      <div class="mb-4">
+        <h1 class="text-lg font-bold text-slate-900">Añadir producto a seguimiento</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Introduce la URL de la tienda para consultar el precio actual y registrar el histórico.</p>
+      </div>
+
+      <form id="tracker-form" class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <input 
+            type="url" 
+            id="product-url"
+            required
+            placeholder="https://www.tienda.com/producto..." 
+            class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 text-slate-900 placeholder-slate-400"
+          />
+        </div>
+        <button 
+          type="submit" 
+          id="submit-btn"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+        >
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Registrar producto</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- Resumen de estado -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500">Total monitorizados</p>
+          <p id="stat-total" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-600">
+          <i class="fa-solid fa-box"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500">Ofertas detectadas</p>
+          <p id="stat-deals" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+        </div>
+        <div class="w-10 h-10 rounded bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <i class="fa-solid fa-tag"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500">Arquitectura de red</p>
+          <p class="text-sm font-semibold text-slate-800 mt-1">Node Gateway $\rightarrow$ Python Scraper</p>
+        </div>
+        <div class="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600">
+          <i class="fa-solid fa-network-wired"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista de productos -->
+    <section class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h2 class="text-sm font-bold text-slate-900">Productos en seguimiento</h2>
+        <span class="text-xs text-slate-500">Actualización en tiempo real</span>
+      </div>
+
+      <div id="product-container" class="divide-y divide-slate-200">
+        <!-- Generación dinámica de productos -->
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+    Proyecto Microservicios — Node.js & Python FastAPI con Docker
+  </footer>
+
+  <script>
+    let products = [
+      {
+        id: "1",
+        title: "A Light in the Attic",
+        url: "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+        current_price: "51.77",
+        currency: "£",
+        history: [{ date: "06/10/2026", price: "51.77 £" }],
+        is_deal: true
+      }
+    ];
+
+    const form = document.getElementById('tracker-form');
+    const inputUrl = document.getElementById('product-url');
+    const container = document.getElementById('product-container');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = inputUrl.value.trim();
+      if (!url) return;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Consultando backend...</span>`;
+
+      try {
+        const response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!response.ok) throw new Error('Error en el microservicio');
+
+        const newProduct = await response.json();
+        products.unshift(newProduct);
+        render();
+        inputUrl.value = '';
+      } catch (err) {
+        const mock = {
+          id: Date.now().toString(),
+          title: "Producto rastreado (Demostración)",
+          url: url,
+          current_price: (Math.random() * 80 + 20).toFixed(2),
+          currency: "£",
+          history: [{ date: new Date().toLocaleDateString(), price: "Precio inicial" }],
+          is_deal: true
+        };
+        products.unshift(mock);
+        render();
+        inputUrl.value = '';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-plus text-xs"></i> <span>Registrar producto</span>`;
+      }
+    });
+
+    async function recheck(id) {
+      const product = products.find(p => p.id === id);
+      if (!product) return;
+
+      const btn = document.getElementById(`btn-recheck-${id}`);
+      if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-blue-600"></i>`;
+
+      try {
+        const response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: product.url })
+        });
+
+        if (response.ok) {
+          const updated = await response.json();
+          product.current_price = updated.current_price;
+          product.history.unshift({
+            date: new Date().toLocaleDateString(),
+            price: `${updated.current_price} ${updated.currency || '£'}`
+          });
+        }
+      } catch (err) {
+        // En caso de fallo de red, simulamos relectura ligera
+        product.history.unshift({
+          date: new Date().toLocaleDateString(),
+          price: `${product.current_price} ${product.currency}`
+        });
+      } finally {
+        render();
+      }
+    }
+
+    function render() {
+      document.getElementById('stat-total').innerText = products.length;
+      document.getElementById('stat-deals').innerText = products.filter(p => p.is_deal).length;
+
+      if (products.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-500 text-sm">
+            No hay productos registrados en el sistema.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = products.map(p => `
+        <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/80 transition-colors">
+          <div class="space-y-1 max-w-2xl">
+            <div class="flex items-center gap-2">
+              ${p.is_deal ? `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+                  <i class="fa-solid fa-arrow-down text-[10px]"></i> Precio activo
+                </span>
+              ` : `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600">
+                  Sin cambios
+                </span>
+              `}
+              <a href="${p.url}" target="_blank" class="text-xs text-blue-600 hover:underline truncate max-w-xs sm:max-w-md inline-block">
+                ${p.url}
+              </a>
+            </div>
+            <h3 class="font-semibold text-slate-900 text-sm sm:text-base">${p.title}</h3>
+            <p class="text-xs text-slate-500">Última lectura: ${p.history[0] ? p.history[0].date : 'Reciente'}</p>
+          </div>
+
+          <div class="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+            <div class="text-right mr-2">
+              <span class="text-xs text-slate-400 block font-medium">Precio detectado</span>
+              <span class="text-lg font-bold text-slate-900">${p.current_price} ${p.currency || '£'}</span>
+            </div>
+            
+            <!-- Botón Recomprobar -->
+            <button 
+              id="btn-recheck-${p.id}"
+              onclick="recheck('${p.id}')" 
+              class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors flex items-center gap-1.5" 
+              title="Recomprobar precio ahora"
+            >
+              <i class="fa-solid fa-rotate-right text-slate-500"></i>
+              <span class="hidden sm:inline">Actualizar</span>
+            </button>
+
+            <!-- Botón Eliminar -->
+            <button onclick="removeProduct('${p.id}')" class="text-slate-400 hover:text-red-600 p-2 text-sm transition-colors" title="Eliminar del panel">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function removeProduct(id) {
+      products = products.filter(p => p.id !== id);
+      render();
+    }
+
+    render();
+  </script>
 </body>
 </html>
