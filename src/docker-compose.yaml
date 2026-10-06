@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  # Servidor principal en Node.js (API Gateway + Frontend)
+  backend-node:
+    build: ./backend-node
+    ports:
+      - "3000:3000"
+    environment:
+      - PYTHON_SERVICE_URL=http://backend-python:5000
+    depends_on:
+      - backend-python
+
+  # Microservicio de Scraping en Python
+  backend-python:
+    build: ./backend-python
+    ports:
+      - "5000:5000"
