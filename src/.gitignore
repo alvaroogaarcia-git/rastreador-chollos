@@ -1,0 +1,13 @@
+# Dependencias de Node.js
+node_modules/
+npm-debug.log
+
+# Entornos virtuales de Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Archivos del sistema operativo y variables de entorno
+.DS_Store
+.env
