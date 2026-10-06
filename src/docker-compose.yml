@@ -1,9 +1,10 @@
 version: '3.8'
 
 services:
-  # Servidor principal en Node.js (API Gateway + Frontend)
   backend-node:
-    build: ./backend-node
+    build:
+      context: .
+      dockerfile: backend-node/Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -11,8 +12,9 @@ services:
     depends_on:
       - backend-python
 
-  # Microservicio de Scraping en Python
   backend-python:
-    build: ./backend-python
+    build:
+      context: .
+      dockerfile: backend-python/Dockerfile
     ports:
       - "5000:5000"
