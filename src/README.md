@@ -4,173 +4,126 @@
 ![Docker](https://img.shields.io/badge/Docker-Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2F%20Express-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Python](https://img.shields.io/badge/Scraper-Python%20%2F%20FastAPI-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Frontend](https://img.shields.io/badge/Frontend-SPA%20%2F%20TailwindCSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
-Plataforma web distribuida orientada a la monitorización de productos e-commerce, extracción automatizada de precios mediante *web scraping* y análisis del historial de variaciones para la detección de ofertas.
-
----
-
-## 📐 Arquitectura del Sistema
-
-El proyecto está diseñado bajo una **arquitectura de microservicios políglota**, separando la lógica de la interfaz web/API Gateway del motor intensivo de procesamiento y extracción de datos.
-
-### Flujo de Datos del Sistema
-
-![Flujo de Arquitectura](https://raw.githubusercontent.com/alvaroogaarcia-git/rastreador-chollos/main/docs/architecture-flow.png)
-
-```text
-[ Cliente Web (SPA) ]
-        │
-        │ HTTP / JSON (Puerto 3000)
-        ▼
-[ API Gateway (Node.js + Express) ]
-        │
-        │ Red Interna Docker (http://backend-python:5000/scrape)
-        ▼
-[ Engine Scraper (Python + FastAPI + BeautifulSoup) ]
-        │
-        │ Petición HTTP GET
-        ▼
-[ Tienda Online Objetivo (Books to Scrape / E-commerce) ]
-```
-
-### Componentes de la Arquitectura
-
-1. **Frontend (SPA):** Interfaz gráfica responsive en HTML5, Vanilla JavaScript y Tailwind CSS. Diseñada bajo un estilo de panel de control SaaS corporativo.
-2. **API Gateway (Node.js / Express):** Servidor principal encargado de servir los archivos estáticos de la SPA, validar peticiones de entrada y orquestar las llamadas hacia la red interna de microservicios.
-3. **Engine Scraper (Python / FastAPI):** Microservicio especializado en descargar de forma asíncrona el HTML de las páginas objetivo, analizar el DOM mediante `BeautifulSoup4` y extraer títulos, precios y divisas.
-4. **Orquestador (Docker Compose):** Aísla cada entorno en contenedores ligeros y define una red interna privada para la comunicación inter-servicio.
+Plataforma web distribuida basada en arquitectura de microservicios orientada a la monitorización de productos e-commerce, extracción automatizada de precios mediante *web scraping* y seguimiento de histórico de variaciones.
 
 ---
 
-## 📁 Estructura del Proyecto
+## 0) Software Necesario
 
-```text
-rastreador-chollos/
-├── docker-compose.yml           # Orquestación de contenedores y redes
-├── README.md                    # Documentación principal del proyecto
-├── presentation/
-│   └── presentacion.pptx        # Diapositivas para la defensa del proyecto
-└── src/
-    ├── backend-node/            # Microservicio API Gateway (Node.js)
-    │   ├── Dockerfile
-    │   ├── index.js
-    │   └── package.json
-    ├── backend-python/          # Microservicio Web Scraper (Python)
-    │   ├── Dockerfile
-    │   ├── main.py
-    │   └── requirements.txt
-    └── frontend/                # Interfaz de Usuario (SPA)
-        └── index.html
-```
+Para la ejecución y despliegue del proyecto en cualquier entorno (Windows, macOS, Linux o GitHub Codespaces), se requiere el siguiente software instalado:
+
+* **Docker Desktop** (v20.10 o superior) / **Docker Engine**
+* **Docker Compose** (v2.0 o superior)
+* **Git** (para la clonación del repositorio)
+* **Navegador Web Moderno** (Google Chrome, Mozilla Firefox, Microsoft Edge o Safari)
+* *(Opcional)* **Node.js** (v18+) y **Python** (v3.10+) únicamente si se desea desarrollo/depuración local sin contenedores.
 
 ---
 
-## 🛠 Tecnologías Utilizadas
+## 1) Servicios a Arrancar
 
-| Capa | Tecnología | Función |
-| :--- | :--- | :--- |
-| **Frontend** | HTML5, Tailwind CSS, JS (Fetch API) | Interfaz asíncrona en una sola página (SPA) |
-| **API Gateway** | Node.js, Express.js | Orquestación, enrutamiento y servicio estático |
-| **Scraper** | Python, FastAPI, BeautifulSoup4 | Extracción automatizada y parseo de HTML |
-| **Contenedores** | Docker, Docker Compose | Containerización y aislamiento de microservicios |
-| **Despliegue** | GitHub Codespaces / Local | Entorno de ejecución en nube y desarrollo remoto |
+La aplicación se compone de dos microservicios aislados en contenedores independientes que se comunican dentro de una red privada de Docker:
 
----
-
-## 🔌 Especificación de la API REST
-
-### 1. Endpoint en API Gateway (Node.js)
-
-* **Ruta:** `POST /api/products`
-* **Descripción:** Recibe la URL a rastrear y solicita la extracción de datos al microservicio de Python.
-* **Request Body:**
-  ```json
-  {
-    "url": "[http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html](http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html)"
-  }
-  ```
-* **Response (200 OK):**
-  ```json
-  {
-    "id": "1728211200000",
-    "title": "A Light in the Attic",
-    "url": "[http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html](http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html)",
-    "current_price": "51.77",
-    "currency": "£",
-    "history": [
-      {
-        "date": "06/10/2026",
-        "price": "51.77 £"
-      }
-    ]
-  }
-  ```
-
-### 2. Endpoint Interno de Scraping (Python)
-
-* **Ruta:** `POST /scrape`
-* **Descripción:** Petición interna ejecutada desde Node.js hacia el contenedor de Python.
-* **Request Body:**
-  ```json
-  {
-    "url": "[http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html](http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html)"
-  }
-  ```
+1. **`backend-node` (API Gateway & Servidor Web):**
+   * **Función:** Recibe las peticiones del cliente, sirve la interfaz estática (SPA) y actúa de proxy/gateway orquestando las peticiones de scraping.
+   * **Puerto expuesto:** `3000`
+2. **`backend-python` (Motor de Web Scraping):**
+   * **Función:** Realiza la extracción automatizada de datos (título, precio, moneda) parseando el HTML de las webs objetivo.
+   * **Puerto expuesto:** `5000` (Red interna Docker: `http://backend-python:5000`)
 
 ---
 
-## 🚀 Despliegue y Ejecución
+## 2) Dependencias del Proyecto
 
-### Requisitos Previos
+### Dependencias del API Gateway (`src/backend-node/package.json`)
+* `express` (v4.18.2): Framework web para la creación de rutas HTTP y servidor estático.
+* `axios` (v1.6.2): Cliente HTTP para la comunicación inter-servicio con el microservicio en Python.
+* `cors` (v2.8.5): Gestión de políticas de acceso cruzado entre dominios.
 
-* Tener instalado **Docker** y **Docker Compose** (o ejecutar directamente en **GitHub Codespaces**).
+### Dependencias del Scraper (`src/backend-python/requirements.txt`)
+* `fastapi` (v0.104.1): Framework asíncrono de alto rendimiento para construir la API REST.
+* `uvicorn` (v0.24.0): Servidor ASGI para la ejecución de FastAPI.
+* `beautifulsoup4` (v4.12.2): Librería para el parseo y extracción de elementos del DOM HTML.
+* `requests` (v2.31.0): Cliente de peticiones HTTP para descargar páginas web.
+* `lxml` (v4.9.3): Parser ultra-rápido para procesamiento de HTML/XML.
 
-### Instrucciones de Arranque
+---
 
-1. **Clonar el repositorio:**
+## 3) Cómo Arrancar la Parte Servidora
+
+El arranque del servidor y la orquestación de todos los microservicios se realiza mediante **Docker Compose**:
+
+1. **Clonar el repositorio de GitHub:**
    ```bash
    git clone [https://github.com/alvaroogaarcia-git/rastreador-chollos.git](https://github.com/alvaroogaarcia-git/rastreador-chollos.git)
-   cd rastreador-chollos/src
+   cd rastreador-chollos
    ```
 
-2. **Levantar la infraestructura con Docker Compose:**
+2. **Acceder a la carpeta fuente:**
+   ```bash
+   cd src
+   ```
+
+3. **Construir y arrancar los contenedores:**
    ```bash
    docker compose up --build
    ```
 
-3. **Acceder a la aplicación:**
-   * **Interfaz Web (Node.js):** `http://localhost:3000`
-   * **Microservicio Python (Salud/Scraper):** `http://localhost:5000`
+   *Este comando descargará las imágenes base, instalará todas las dependencias definidas y levantará los servicios en segundo plano o en consola.*
 
 ---
 
-## 🧪 Guía de Pruebas (Demo)
+## 4) Cómo Acceder a la Parte Cliente
 
-Para validar la extracción de datos en tiempo real sin bloqueos por cortafuegos o captchas, se recomienda utilizar productos del portal de prueba oficial *Books to Scrape*:
+Una vez ejecutado el comando `docker compose up --build`:
 
-1. Copia la URL del siguiente producto de prueba:
+### Acceso Local (PC / Servidor Propio)
+Abre tu navegador web y navega a la siguiente dirección:
+* **URL del Cliente:** `http://localhost:3000`
+
+### Acceso desde GitHub Codespaces
+1. En la barra inferior del entorno de Codespaces, haz clic en la pestaña **Ports** (Puertos).
+2. Ubica la fila del **Puerto 3000** (`backend-node`).
+3. Haz clic en el icono del globo terráqueo (**Open in Browser**) o abre el enlace asignado.
+
+---
+
+## 📐 Arquitectura y Flujo de Datos
+
+```text
+[ Cliente Web (SPA / Navegador) ]
+               │
+               │ HTTP POST /api/products (Puerto 3000)
+               ▼
+[ API Gateway (Node.js + Express) ]
+               │
+               │ HTTP POST /scrape (Red Docker: http://backend-python:5000)
+               ▼
+[ Engine Scraper (Python + FastAPI + BeautifulSoup) ]
+               │
+               │ Petición HTTP GET
+               ▼
+[ Web Objetivo (e-commerce / Books to Scrape) ]
+```
+
+---
+
+## 🧪 Guía de Pruebas Rápidas (Demo)
+
+Para probar la extracción de datos sin riesgo de bloqueos por cortafuegos o captchas:
+
+1. Copia la URL de este producto de pruebas:
    ```text
    [http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html](http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html)
    ```
-2. Pégala en el campo **"Añadir producto a seguimiento"** del panel web.
-3. Haz clic en **Registrar producto**.
-4. Comprueba cómo el microservicio en Python raspa el título (*A Light in the Attic*) y el precio (*£51.77*), registrándolo dinámicamente en la interfaz.
-5. Haz clic en el botón **Actualizar** para forzar una nueva relectura del precio bajo demanda.
-
----
-
-## 💡 Lecciones Aprendidas y Trabajo Futuro
-
-* **Cabeceras HTTP y Prevención de Bloqueos:** Se configuraron cabeceras `User-Agent` personalizadas en el cliente de Python para simular navegadores reales y evitar bloqueos HTTP `403 Forbidden` durante el raspado.
-* **Orquestación de Rutas en Docker:** Se configuró el contexto de construcción en la raíz `src/` para permitir que el contenedor Node.js copie y sirva los recursos del directorio `frontend/`.
-* **Líneas de Trabajo Futuro:**
-  * Implementación de un programador de tareas (*Cron Job*) mediante `node-cron` o `Celery` para automatizar relecturas nocturnas de precios.
-  * Persistencia de datos en base de datos PostgreSQL/MongoDB.
-  * Sistema de notificaciones por email o Telegram al detectar bajadas de precio objetivo.
+2. Pégala en el campo **"Añadir producto a seguimiento"** dentro de la interfaz web.
+3. Pulsa el botón **Registrar producto**.
+4. La aplicación mostrará la tarjeta con el título (*A Light in the Attic*) y precio (*£51.77*) parseados en tiempo real.
+5. Pulsa el botón **Actualizar** en la tarjeta para forzar una relectura del precio bajo demanda.
 
 ---
 
 ## 👤 Autor
 
-* **Álvaro García** — *Desarrollo integral y arquitectura* — [@alvaroogaarcia-git](https://github.com/alvaroogaarcia-git)
+* **Álvaro García** — [@alvaroogaarcia-git](https://github.com/alvaroogaarcia-git)
